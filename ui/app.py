@@ -13,7 +13,7 @@ from src.github_client import GitHubClient, GitHubClientError, parse_github_url
 from src.repo_filter import filter_python_files
 
 
-def load_repository(url: str, token: str | None = None, max_files: int = 100) -> tuple[str, dict[str, str]]:
+def load_repository(url: str, token: str | None = None, max_files: int = 200) -> tuple[str, dict[str, str]]:
     """Fetch and filter a repository without cloning it."""
     owner, repo = parse_github_url(url)
     client = GitHubClient(token=token)
@@ -44,7 +44,7 @@ def main() -> None:
         default_url = "https://github.com/psf/requests" if example else ""
         repo_url = st.text_input("Public GitHub URL", value=default_url)
         function_name = st.text_input("Function to change", value="request")
-        max_files = st.number_input("Maximum Python files", min_value=1, max_value=2500, value=100)
+        max_files = st.number_input("Maximum Python files", min_value=1, max_value=2500, value=200)
         analyze = st.button("Analyze impact", type="primary", use_container_width=True)
 
     if not analyze:

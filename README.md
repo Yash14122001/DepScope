@@ -95,16 +95,22 @@ py eval/run_eval.py
 
 The command writes the recorded baseline to `eval/eval_results.md`. A prediction is a caller node such as `service.py::process`; precision measures how many predicted callers are correct, while recall measures how many expected callers were found. Keep the dataset fixed while comparing implementation changes.
 
-## Weeks 11–12: Demo and Design Notes
+## Weeks 11–12: Browser App and Design Notes
 
-The Streamlit interface lives in `ui/app.py`. Start it with:
+The product frontend lives in `web/` and is served by the FastAPI application in `src/main.py`. Start it with:
 
 ```powershell
 py -m pip install -r requirements.txt
-py -m streamlit run ui/app.py
+py -m uvicorn src.main:app --reload
 ```
 
-The default example analyzes `psf/requests`; uncheck **Use example** to enter another public repository. The screen reports direct callers, exact source lines, confidence, and callees for context. It fetches source into memory only. Semantic embeddings and Gemini remain separate services so the basic graph demo is useful even without an AI key or a model download.
+Open `http://localhost:8000`. Enter a public GitHub repository, wait for the in-memory analysis to finish, and then ask general questions in the repository conversation. Examples include `How is authentication handled?`, `Where is the database configured?`, `Which files define the API routes?`, and `What calls the request function?`
+
+The backend creates a repository session containing safe readable files and a Python call graph. It analyzes common code, documentation, configuration, SQL, and script files as text, while exact AST callers/callees remain Python-only. Gemini receives tools for listing files, searching source text, reading bounded line ranges, finding callers/callees, and semantic search when an embedding store is provided. The answer should cite paths and lines and distinguish evidence from inference. The frontend is plain HTML, CSS, and JavaScript so it stays lightweight and does not require Streamlit.
+
+Repository files are limited to 2,500 entries by default and individual files are limited to 200 KB. Binary-looking content, secrets such as `.env` and private-key files, generated/vendor directories, and unsupported extensions are skipped before analysis.
+
+The former `ui/app.py` Streamlit screen is retained as an experimental legacy view, but it is no longer the primary interface or required dependency.
 
 The architecture is deliberately hybrid:
 

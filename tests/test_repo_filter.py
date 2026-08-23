@@ -1,6 +1,6 @@
 import pytest
 
-from src.repo_filter import filter_python_files
+from src.repo_filter import filter_python_files, filter_repository_files
 
 
 ENTRIES = [
@@ -20,3 +20,16 @@ def test_filters_to_non_generated_python_source():
 def test_enforces_file_limit():
     with pytest.raises(ValueError, match="limit is 0"):
         filter_python_files([{"path": "app.py", "type": "blob"}], max_files=0)
+
+
+def test_repository_filter_includes_supported_text_and_excludes_secrets():
+    entries = [
+        {"path": "README.md", "type": "blob"},
+        {"path": "frontend/app.tsx", "type": "blob"},
+        {"path": "config.yaml", "type": "blob"},
+        {"path": ".env", "type": "blob"},
+        {"path": "image.png", "type": "blob"},
+        {"path": "large.json", "type": "blob", "size": 200001},
+    ]
+
+    assert filter_repository_files(entries) == ["README.md", "config.yaml", "frontend/app.tsx"]

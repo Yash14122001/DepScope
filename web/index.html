@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DepScope | Repository intelligence</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><a class="brand" href="/"><span class="brand-mark">D</span><span>DepScope</span></a><div class="status"><span class="status-dot"></span><span id="statusText">Ready to inspect</span></div></header>
+    <section class="hero" id="welcomeView"><p class="eyebrow">Repository intelligence</p><h1>Ask your codebase<br><em>anything.</em></h1><p class="hero-copy">Map a public GitHub repository once. Then explore its structure, decisions, dependencies, and documentation in a conversation grounded in the source.</p><form id="analyzeForm" class="analyze-form"><label for="repoUrl">GitHub repository URL</label><div class="url-row"><input id="repoUrl" type="url" value="https://github.com/psf/requests" placeholder="https://github.com/owner/repository" required><button type="submit"><span>Analyze repository</span><span class="arrow">&#8594;</span></button></div><div class="form-meta"><span>No clone. In-memory analysis.</span><span>Code, config, docs, and text files.</span></div></form></section>
+    <section class="workspace hidden" id="workspaceView"><aside class="repo-panel"><div class="panel-label">Analyzed repository</div><h2 id="repoName">Repository</h2><p class="branch" id="branchName">main</p><div class="stats"><div><strong id="fileCount">0</strong><span>Files analyzed</span></div><div><strong id="functionCount">0</strong><span>Python functions</span></div></div><div class="repo-note"><span class="mini-dot"></span><span>Text and source stay in memory for this session.</span></div><button class="reset-button" id="newRepoButton">Analyze another repo <span>&#8599;</span></button></aside><section class="chat-panel"><div class="chat-heading"><div><p class="eyebrow">Repository conversation</p><h2>What do you want to understand?</h2></div><span class="ai-chip">GEMINI READY</span></div><div class="messages" id="messages"><div class="message assistant"><div class="avatar">D</div><div><p>Repository analyzed. Ask me about architecture, decisions, files, functions, configuration, dependencies, or anything else in the source.</p><span class="message-time">Now</span></div></div></div><form class="question-form" id="questionForm"><textarea id="question" rows="2" placeholder="e.g. How is authentication handled in this repository?" required></textarea><button type="submit" aria-label="Ask question"><span>&#8593;</span></button><div class="question-hint">Answers are grounded in the analyzed repository</div></form></section></section>
+    <div class="toast hidden" id="toast"></div>
+  </main><script src="/app.js"></script>
+</body>
+</html>

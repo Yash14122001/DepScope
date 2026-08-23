@@ -1,0 +1,25 @@
+[
+  {
+    "id": "imported-helper",
+    "description": "A direct caller through a from-import alias",
+    "files": {
+      "utils.py": "def normalize(value):\n    return value.strip()\n",
+      "service.py": "from utils import normalize as clean\n\ndef process(value):\n    return clean(value)\n"
+    },
+    "target": "normalize",
+    "expected_direct_callers": ["service.py::process"],
+    "expected_related": [],
+    "expected_confidence": "high"
+  },
+  {
+    "id": "method-caller",
+    "description": "A direct caller through a class method",
+    "files": {
+      "worker.py": "class Worker:\n    def run(self):\n        return self.save()\n\n    def save(self):\n        return True\n"
+    },
+    "target": "Worker.save",
+    "expected_direct_callers": ["worker.py::Worker.run"],
+    "expected_related": [],
+    "expected_confidence": "high"
+  }
+]

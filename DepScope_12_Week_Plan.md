@@ -245,3 +245,142 @@ Fill these in with your real numbers once you have them:
 - Add a simple caching layer keyed by commit SHA so re-analyzing an unchanged repo is instant.
 - Add a basic cost dashboard (tokens + $ per query) — a small but real "production thinking" touch.
 - Deploy it (Render/Fly.io free tier) so it's a live link, not just something reviewers have to run locally.
+
+---
+
+## Future Roadmap — Multi-Language and Whole-Repository Support
+
+The 12-week MVP focuses on Python because Python's standard `ast` module gives us a reliable starting point. The next version should expand in layers rather than pretending every file type can be analyzed with the same parser.
+
+### Layer 1 — Support More Text Files
+
+Add a generic repository file pipeline for files that can be read and searched but do not yet have exact dependency analysis:
+
+- Markdown: `README.md`, documentation, design notes
+- JSON and YAML: configuration and deployment files
+- TOML and INI: project and tool configuration
+- SQL: queries, migrations, and schema references
+- Shell scripts: `.sh`, `.ps1`, and `.bat`
+- Build files: `Dockerfile`, `Makefile`, CI workflows
+
+For each file, store:
+
+```text
+path, file type, start/end lines, text, commit SHA
+```
+
+Chunk these files by logical sections where possible. Use semantic search to answer questions such as "where is the database connection configured?" Label these results as semantic evidence, not exact call-graph evidence.
+
+### Layer 2 — Create a Common Analysis Interface
+
+Introduce a language-independent contract so each parser produces the same kind of output:
+
+```text
+LanguageAdapter
+  supports(path) -> bool
+  parse(path, source) -> ParsedFile
+
+ParsedFile
+  language
+  symbols
+  imports
+  calls
+  references
+  parse_errors
+```
+
+Keep the existing Python parser behind a `PythonAdapter`. The call graph should consume `ParsedFile` objects rather than knowing Python-specific AST details.
+
+### Layer 3 — Add JavaScript and TypeScript
+
+This should be the first additional programming-language target because web repositories commonly mix Python with JavaScript or TypeScript.
+
+- Detect `.js`, `.jsx`, `.ts`, and `.tsx`
+- Use Tree-sitter or the TypeScript compiler API
+- Extract functions, classes, methods, imports, exports, and calls
+- Resolve ES module imports and CommonJS `require()` where possible
+- Preserve unresolved dynamic behavior as `unknown/dynamic`
+- Add mixed-language fixtures and real-repository tests
+
+Do not merge JavaScript results into the graph until the common symbol and edge format is stable.
+
+### Layer 4 — Add Additional Compiled Languages
+
+Add languages based on user demand and parser maturity:
+
+| Language | File types | Candidate parser |
+|---|---|---|
+| Java | `.java` | Tree-sitter or JavaParser |
+| Go | `.go` | Go standard parser or Tree-sitter |
+| Rust | `.rs` | Tree-sitter or `syn` |
+| C/C++ | `.c`, `.h`, `.cpp` | Tree-sitter or Clang |
+| C# | `.cs` | Roslyn or Tree-sitter |
+
+For each language, repeat the same delivery cycle:
+
+1. Add a language adapter and file detection rules.
+2. Define name, import, call, and reference mappings.
+3. Add unit fixtures for normal and dynamic syntax.
+4. Add cross-file graph tests.
+5. Add hand-labeled evaluation cases.
+6. Measure precision, recall, parse failures, and unsupported syntax.
+
+### Layer 5 — Analyze an Entire Repository
+
+Replace the Python-only filter with a repository inventory step:
+
+```text
+GitHub tree
+    -> classify files by language and content type
+    -> exclude binaries, secrets, vendored code, and generated output
+    -> enforce total file and byte limits
+    -> fetch selected files in batches
+    -> run the correct adapter
+    -> index symbols and text chunks
+```
+
+Add safeguards before broadening the file scope:
+
+- Detect binary files and skip them
+- Exclude `.git`, dependencies, build output, caches, and generated files
+- Never index likely secrets such as `.env`, private keys, or credentials
+- Enforce limits on file count, total bytes, and per-file size
+- Use commit SHA as the cache key
+- Report skipped files and the reason for skipping
+- Keep repository contents in memory unless the user explicitly enables persistence
+
+### Cross-Language Graph Rules
+
+The first version should support relationships within one language and explicit cross-language boundaries only where they are observable:
+
+- Python importing Python
+- TypeScript importing TypeScript
+- Frontend calling an HTTP endpoint implemented by Python
+- Configuration referring to a file, command, route, or environment variable
+
+Cross-language relationships should have a separate confidence level. For example, an HTTP route match is weaker than a direct function call and should be labeled `medium` rather than `high`.
+
+### Evaluation Plan for Expansion
+
+Maintain separate evaluation metrics for each language and evidence type:
+
+- Direct call precision and recall
+- Import-resolution precision and recall
+- Semantic-search relevance at fixed `top_k`
+- Parse failure rate
+- Unsupported-file classification accuracy
+- Cross-language boundary precision
+
+Do not combine all languages into one score until each language has enough hand-labeled cases. A realistic first milestone is 10 cases for Python and 10 cases for JavaScript/TypeScript across at least three mixed-language repositories.
+
+### Suggested Release Stages
+
+```text
+v1.0  Python exact analysis + generic text search
+v1.1  JavaScript/TypeScript exact analysis
+v1.2  Mixed-language repository inventory and caching
+v1.3  Configuration, SQL, and documentation relationships
+v2.0  Java, Go, Rust, C/C++, or C# based on demand
+```
+
+The product promise should remain precise: DepScope can provide exact dependency evidence for supported languages, semantic evidence for readable unsupported files, and an explicit explanation whenever analysis is uncertain.
